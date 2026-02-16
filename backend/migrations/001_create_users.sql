@@ -1,6 +1,7 @@
 -- Migration: 001_create_users.sql
 -- Description: Create users table for authentication and profiles
 -- All user types: patients, providers, and admins
+-- Tracks basic info, health conditions, provider details, etc.
 
 CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
