@@ -205,7 +205,8 @@ export const Login = () => {
 
           <h1 className="healix-title">Healix</h1>
           <div className="healix-line" />
-          <p className="healix-tagline">Your Health, Visualized</p>
+
+          <p className="healix-tagline">Your Health. Visualized</p>
         </div>
 
       </div>
