@@ -4,10 +4,11 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { Login } from "./pages/auth/Login";
 import { Signup } from "./pages/auth/Signup";
 import { PatientDashboard } from "./pages/patient/Dashboard";
+import { PatientVitals } from "./pages/patient/Vitals";
 import { ProviderDashboard } from "./pages/provider/Dashboard";
 import { AdminDashboard } from "./pages/admin/Dashboard";
 
-import { Layout } from "./components/Layout";  // Navbar Layout
+import { Layout } from "./components/Layout"; // Navbar Layout
 
 import { Goals } from "./pages/patient/Goals";
 import { Appointments } from "./pages/patient/Appointments";
@@ -35,7 +36,7 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
 
-          {/* Patient pages */}
+          {/* Patient main */}
           <Route element={<Layout />}>
             <Route
               path="/patient"
@@ -47,7 +48,7 @@ export default function App() {
             />
           </Route>
 
-          {/* Provider pages */}
+          {/* Provider main */}
           <Route element={<Layout />}>
             <Route
               path="/provider"
@@ -59,7 +60,7 @@ export default function App() {
             />
           </Route>
 
-          {/* Admin pages */}
+          {/* Admin main */}
           <Route element={<Layout />}>
             <Route
               path="/admin"
@@ -73,12 +74,24 @@ export default function App() {
 
           {/* Patient sub-pages */}
           <Route element={<Layout />}>
-            <Route path="/patient/goals" element={
+            <Route
+              path="/patient/vitals"
+              element={
+                <ProtectedRoute role="patient">
+                  <PatientVitals />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/patient/goals"
+              element={
                 <ProtectedRoute role="patient">
                   <Goals />
                 </ProtectedRoute>
-              } 
+              }
             />
+
             <Route
               path="/patient/appointments"
               element={
@@ -87,6 +100,7 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/patient/prescriptions"
               element={
@@ -95,12 +109,16 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
-            <Route path="/patient/assistant" element={
+
+            <Route
+              path="/patient/assistant"
+              element={
                 <ProtectedRoute role="patient">
                   <Assistant />
                 </ProtectedRoute>
-              } 
+              }
             />
+
             <Route
               path="/patient/settings"
               element={
