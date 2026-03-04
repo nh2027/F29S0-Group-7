@@ -7,6 +7,7 @@ import { PatientDashboard } from "./pages/patient/Dashboard";
 import { PatientVitals } from "./pages/patient/Vitals";
 import { ProviderDashboard } from "./pages/provider/Dashboard";
 import { AdminDashboard } from "./pages/admin/Dashboard";
+import { PatientList } from "./pages/provider/PatientList";
 
 import { Layout } from "./components/Layout"; // Navbar Layout
 
@@ -48,13 +49,13 @@ export default function App() {
             />
           </Route>
 
-          {/* Provider main */}
+          {/* Provider main - redirect to patients */}
           <Route element={<Layout />}>
             <Route
               path="/provider"
               element={
                 <ProtectedRoute role="provider">
-                  <ProviderDashboard />
+                  <Navigate to="/provider/patients" replace />
                 </ProtectedRoute>
               }
             />
@@ -131,6 +132,14 @@ export default function App() {
 
           {/* Provider sub-pages */}
           <Route element={<Layout />}>
+            <Route
+              path="/provider/patients"
+              element={
+                <ProtectedRoute role="provider">
+                  <PatientList />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/provider/appointments"
               element={

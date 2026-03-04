@@ -1,144 +1,402 @@
-import { useNavigate } from "react-router-dom";
-import { MetricCard } from "../../components/health/MetricCard";
-import {
-  thresholds,
-  vitalsToday,
-  vitalsWeek,
-  calcStatsFromToday,
-  calcStatsFromWeek,
-} from "../../data/vitalsMock";
 
-function statusForHeartRate(hr) {
-  if (hr >= thresholds.heartRate.high) return "danger";
-  if (hr >= thresholds.heartRate.high - 10) return "warn";
-  if (hr <= thresholds.heartRate.low) return "warn";
-  return "ok";
-}
-
-function statusForSpO2(spo2) {
-  if (spo2 <= thresholds.spo2.low) return "danger";
-  if (spo2 <= thresholds.spo2.low + 1) return "warn";
-  return "ok";
-}
+import { vitalsToday, calcStatsFromToday } from "../../data/vitalsMock";
 
 export const PatientDashboard = () => {
-  const nav = useNavigate();
-
   const hrStats = calcStatsFromToday(vitalsToday.heartRate);
   const spo2Stats = calcStatsFromToday(vitalsToday.spo2);
 
-  // Replace these with real backend values later:
-  const stepsToday = 7640;
-  const caloriesBurned = 520;
+  const healthCards = [
+    {
+      title: "Heart Rate",
+      value: hrStats.current,
+      unit: "bpm",
+      subtitle: "Current reading",
+      icon: "❤️",
+      color: "#ef4444",
+      gradient: "linear-gradient(135deg, rgba(239,68,68,0.15) 0%, rgba(220,38,38,0.05) 100%)",
+      glow: "0 0 60px rgba(239,68,68,0.4)",
+      iconGlow: "drop-shadow(0 0 20px rgba(239,68,68,0.6))",
+    },
+    {
+      title: "Blood Oxygen",
+      value: spo2Stats.current,
+      unit: "%",
+      subtitle: "SpO₂ level",
+      icon: "💧",
+      color: "#3b82f6",
+      gradient: "linear-gradient(135deg, rgba(59,130,246,0.15) 0%, rgba(37,99,235,0.05) 100%)",
+      glow: "0 0 60px rgba(59,130,246,0.4)",
+      iconGlow: "drop-shadow(0 0 20px rgba(59,130,246,0.6))",
+    },
+    {
+      title: "Steps Today",
+      value: "8,432",
+      unit: "steps",
+      subtitle: "84% of goal",
+      progress: 84,
+      icon: "👟",
+      color: "#10b981",
+      gradient: "linear-gradient(135deg, rgba(16,185,129,0.15) 0%, rgba(5,150,105,0.05) 100%)",
+      glow: "0 0 60px rgba(16,185,129,0.4)",
+      iconGlow: "drop-shadow(0 0 20px rgba(16,185,129,0.6))",
+    },
+    {
+      title: "Calories Burned",
+      value: "1,847",
+      unit: "kcal",
+      subtitle: "Active energy",
+      icon: "🔥",
+      color: "#f59e0b",
+      gradient: "linear-gradient(135deg, rgba(245,158,11,0.15) 0%, rgba(217,119,6,0.05) 100%)",
+      glow: "0 0 60px rgba(245,158,11,0.4)",
+      iconGlow: "drop-shadow(0 0 20px rgba(245,158,11,0.6))",
+    },
+  ];
 
-  const hrWeek = calcStatsFromWeek(vitalsWeek.heartRate, "avg");
-  const activeMinutes = 210;
-  const sleepAvgHours = 7.2;
-
-  const hrStatus = statusForHeartRate(hrStats.current);
-  const spo2Status = statusForSpO2(spo2Stats.current);
+  const weeklySummary = [
+    { label: "Avg Heart Rate", value: "78", unit: "bpm", color: "#ef4444", icon: "💓" },
+    { label: "Active Minutes", value: "342", unit: "min", color: "#10b981", icon: "⚡" },
+    { label: "Sleep Quality", value: "7.2", unit: "hrs", color: "#8b5cf6", icon: "😴" },
+  ];
 
   return (
-    <div style={{ display: "grid", gap: 16 }}>
-      <h1 style={{ margin: 0, fontSize: 28 }}>Patient Dashboard</h1>
-      <p style={{ marginTop: -6, color: "#94a3b8" }}>
-        Overview of your health vitals and weekly trends.
-      </p>
+    <>
+      <style>{`
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(30px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes float {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-12px); }
+        }
+        
+        @keyframes glow {
+          0%, 100% { filter: brightness(1); }
+          50% { filter: brightness(1.4); }
+        }
+        
+        @keyframes shimmer {
+          0% { background-position: -200% center; }
+          100% { background-position: 200% center; }
+        }
+        
+        @keyframes pulse {
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.08); opacity: 0.9; }
+        }
+        
+        .health-card {
+          position: relative;
+          border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 28px;
+          padding: 32px;
+          backdrop-filter: blur(20px);
+          transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+          cursor: pointer;
+          overflow: hidden;
+        }
+        
+        .health-card::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          border-radius: 28px;
+          padding: 1px;
+          background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+          -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+          -webkit-mask-composite: xor;
+          mask-composite: exclude;
+          opacity: 0;
+          transition: opacity 0.5s ease;
+        }
+        
+        .health-card:hover::before {
+          opacity: 1;
+        }
+        
+        .health-card:hover {
+          transform: translateY(-12px) scale(1.02);
+          box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+        }
+        
+        .icon-float {
+          animation: float 4s ease-in-out infinite;
+        }
+        
+        .value-glow {
+          animation: glow 3s ease-in-out infinite;
+        }
+        
+        .gradient-text {
+          background: linear-gradient(135deg, #f1f5f9 0%, #cbd5e1 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+        
+        .weekly-card {
+          transition: all 0.4s ease;
+        }
+        
+        .weekly-card:hover {
+          transform: translateY(-6px);
+          box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+        }
+      `}</style>
 
-      {/* Top cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 12 }}>
-        <MetricCard
-          title="Heart Rate"
-          value={hrStats.current}
-          unit="bpm"
-          sub={`Resting ${hrStats.resting} • Peak ${hrStats.peak}`}
-          status={hrStatus}
-          onClick={() => nav("/patient/vitals")}
-        />
-        <MetricCard
-          title="Blood Oxygen (SpO₂)"
-          value={spo2Stats.current}
-          unit="%"
-          sub={`Today range ${spo2Stats.resting}–${spo2Stats.peak}`}
-          status={spo2Status}
-          onClick={() => nav("/patient/vitals")}
-        />
-        <MetricCard
-          title="Steps Today"
-          value={stepsToday}
-          unit="steps"
-          sub="Daily progress"
-          onClick={() => nav("/patient/vitals")}
-        />
-        <MetricCard
-          title="Calories Burned"
-          value={caloriesBurned}
-          unit="kcal"
-          sub="Estimated today"
-          onClick={() => nav("/patient/vitals")}
-        />
-      </div>
+      <div style={{
+        background: "#060d1a",
+        minHeight: "100vh",
+        padding: "40px 48px",
+        fontFamily: "'DM Sans', sans-serif",
+        position: "relative",
+        overflow: "hidden",
+      }}>
+        
+        {/* Animated background orbs */}
+        <div style={{
+          position: "fixed",
+          top: "-300px",
+          right: "-300px",
+          width: "800px",
+          height: "800px",
+          background: "radial-gradient(circle, rgba(59,130,246,0.1) 0%, transparent 70%)",
+          borderRadius: "50%",
+          pointerEvents: "none",
+          animation: "pulse 10s ease-in-out infinite",
+        }} />
+        
+        <div style={{
+          position: "fixed",
+          bottom: "-200px",
+          left: "-200px",
+          width: "600px",
+          height: "600px",
+          background: "radial-gradient(circle, rgba(16,185,129,0.08) 0%, transparent 70%)",
+          borderRadius: "50%",
+          pointerEvents: "none",
+          animation: "pulse 12s ease-in-out infinite",
+        }} />
 
-      {/* Weekly Summary */}
-      <div style={{ border: "1px solid #1e293b", borderRadius: 16, padding: 16, background: "#0b1220" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
-          <div>
-            <h2 style={{ margin: 0, fontSize: 18 }}>Weekly Summary</h2>
-            <div style={{ color: "#94a3b8", fontSize: 13 }}>Averages and totals from the last 7 days</div>
-          </div>
-
-          <button
-            onClick={() => nav("/patient/vitals")}
-            style={{
-              border: "1px solid #334155",
-              background: "transparent",
-              color: "#f1f5f9",
-              padding: "8px 12px",
-              borderRadius: 10,
-              cursor: "pointer",
-              fontWeight: 700,
-            }}
-          >
-            View Vitals →
-          </button>
+        {/* Header */}
+        <div style={{ marginBottom: "56px", animation: "fadeUp 0.8s ease both", position: "relative", zIndex: 1 }}>
+          <p style={{
+            color: "#3b82f6",
+            fontSize: "13px",
+            fontWeight: "800",
+            letterSpacing: "3.5px",
+            textTransform: "uppercase",
+            margin: "0 0 14px 0",
+            opacity: 0.95,
+          }}>
+            Health Dashboard
+          </p>
+          <h1 className="gradient-text" style={{
+            fontSize: "56px",
+            fontWeight: "900",
+            margin: "0 0 10px 0",
+            letterSpacing: "-2px",
+            lineHeight: 1.1,
+          }}>
+            Welcome Back
+          </h1>
+          <p style={{
+            color: "#64748b",
+            fontSize: "18px",
+            margin: 0,
+            fontWeight: "500",
+          }}>
+            Your health metrics at a glance ✨
+          </p>
         </div>
 
-        <div style={{ marginTop: 12, display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 12 }}>
-          <div style={{ padding: 12, borderRadius: 14, background: "#111c33", border: "1px solid #1e293b" }}>
-            <div style={{ fontWeight: 900 }}>Avg Heart Rate</div>
-            <div style={{ fontSize: 26, fontWeight: 900, marginTop: 6 }}>{hrWeek.avg} bpm</div>
-            <div style={{ color: "#94a3b8", fontSize: 13 }}>
-              Resting {hrWeek.resting} • Peak {hrWeek.peak}
+        {/* Health Cards */}
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+          gap: "28px",
+          marginBottom: "64px",
+          position: "relative",
+          zIndex: 1,
+        }}>
+          {healthCards.map((card, i) => (
+            <div
+              key={i}
+              className="health-card"
+              style={{
+                background: card.gradient,
+                animation: `fadeUp 0.8s ease ${i * 0.12}s both`,
+              }}
+            >
+              {/* Glowing icon */}
+              <div className="icon-float" style={{
+                fontSize: "48px",
+                marginBottom: "20px",
+                filter: card.iconGlow,
+              }}>
+                {card.icon}
+              </div>
+
+              {/* Title */}
+              <div style={{
+                color: "#94a3b8",
+                fontSize: "13px",
+                fontWeight: "700",
+                textTransform: "uppercase",
+                letterSpacing: "1.5px",
+                marginBottom: "16px",
+              }}>
+                {card.title}
+              </div>
+
+              {/* Value */}
+              <div style={{ display: "flex", alignItems: "baseline", gap: "10px", marginBottom: "8px" }}>
+                <span className="value-glow" style={{
+                  color: card.color,
+                  fontSize: "56px",
+                  fontWeight: "900",
+                  letterSpacing: "-2.5px",
+                  lineHeight: 1,
+                  textShadow: card.glow,
+                }}>
+                  {card.value}
+                </span>
+                <span style={{
+                  color: "#64748b",
+                  fontSize: "20px",
+                  fontWeight: "700",
+                }}>
+                  {card.unit}
+                </span>
+              </div>
+
+              {/* Subtitle */}
+              <div style={{
+                color: "#64748b",
+                fontSize: "15px",
+                fontWeight: "500",
+                marginBottom: "16px",
+              }}>
+                {card.subtitle}
+              </div>
+
+              {/* Progress bar for Steps */}
+              {card.progress && (
+                <div style={{
+                  marginTop: "20px",
+                  position: "relative",
+                }}>
+                  <div style={{
+                    height: "8px",
+                    background: "rgba(255,255,255,0.08)",
+                    borderRadius: "999px",
+                    overflow: "hidden",
+                  }}>
+                    <div style={{
+                      height: "100%",
+                      width: `${card.progress}%`,
+                      background: `linear-gradient(90deg, ${card.color}, ${card.color}cc)`,
+                      borderRadius: "999px",
+                      transition: "width 2s cubic-bezier(0.4, 0, 0.2, 1) 0.3s",
+                      boxShadow: `0 0 20px ${card.color}88`,
+                      backgroundSize: "200% 100%",
+                      animation: "shimmer 3s linear infinite",
+                    }} />
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
+          ))}
+        </div>
 
-          <div style={{ padding: 12, borderRadius: 14, background: "#111c33", border: "1px solid #1e293b" }}>
-            <div style={{ fontWeight: 900 }}>Active Minutes</div>
-            <div style={{ fontSize: 26, fontWeight: 900, marginTop: 6 }}>{activeMinutes} min</div>
-            <div style={{ color: "#94a3b8", fontSize: 13 }}>Weekly total</div>
-          </div>
+        {/* Weekly Summary */}
+        <div style={{ animation: "fadeUp 0.8s ease 0.5s both", position: "relative", zIndex: 1 }}>
+          <h2 className="gradient-text" style={{
+            fontSize: "36px",
+            fontWeight: "800",
+            marginBottom: "32px",
+            letterSpacing: "-1px",
+          }}>
+            Weekly Summary
+          </h2>
 
-          <div style={{ padding: 12, borderRadius: 14, background: "#111c33", border: "1px solid #1e293b" }}>
-            <div style={{ fontWeight: 900 }}>Sleep</div>
-            <div style={{ fontSize: 26, fontWeight: 900, marginTop: 6 }}>{sleepAvgHours} hrs</div>
-            <div style={{ color: "#94a3b8", fontSize: 13 }}>Average per night</div>
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+            gap: "24px",
+          }}>
+            {weeklySummary.map((item, i) => (
+              <div
+                key={i}
+                className="weekly-card"
+                style={{
+                  background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  borderRadius: "24px",
+                  padding: "32px",
+                  position: "relative",
+                  overflow: "hidden",
+                  animation: `fadeUp 0.6s ease ${0.6 + i * 0.12}s both`,
+                }}
+              >
+                {/* Top accent bar */}
+                <div style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: "4px",
+                  background: `linear-gradient(90deg, ${item.color}, transparent)`,
+                  boxShadow: `0 0 20px ${item.color}88`,
+                }} />
+
+                {/* Icon */}
+                <div style={{
+                  fontSize: "32px",
+                  marginBottom: "16px",
+                  filter: `drop-shadow(0 0 16px ${item.color}88)`,
+                }}>
+                  {item.icon}
+                </div>
+
+                {/* Label */}
+                <div style={{
+                  color: "#94a3b8",
+                  fontSize: "12px",
+                  fontWeight: "700",
+                  textTransform: "uppercase",
+                  letterSpacing: "1.5px",
+                  marginBottom: "12px",
+                }}>
+                  {item.label}
+                </div>
+
+                {/* Value */}
+                <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
+                  <span style={{
+                    color: item.color,
+                    fontSize: "40px",
+                    fontWeight: "900",
+                    letterSpacing: "-1.5px",
+                    textShadow: `0 0 30px ${item.color}66`,
+                  }}>
+                    {item.value}
+                  </span>
+                  <span style={{
+                    color: "#64748b",
+                    fontSize: "16px",
+                    fontWeight: "700",
+                  }}>
+                    {item.unit}
+                  </span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
-
-      {/* Warning block */}
-      {(hrStatus === "danger" || spo2Status === "danger") && (
-        <div style={{ border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.10)", borderRadius: 16, padding: 16 }}>
-          <div style={{ fontWeight: 900, color: "#fca5a5" }}>Warning</div>
-          <div style={{ marginTop: 6, color: "#fecaca" }}>
-            {hrStatus === "danger" ? `High heart rate detected (${hrStats.current} bpm). ` : null}
-            {spo2Status === "danger" ? `Low SpO₂ detected (${spo2Stats.current}%).` : null}
-          </div>
-          <div style={{ marginTop: 6, color: "#94a3b8", fontSize: 13 }}>
-            If readings persist or you feel unwell, seek medical advice.
-          </div>
-        </div>
-      )}
-    </div>
+    </>
   );
 };
